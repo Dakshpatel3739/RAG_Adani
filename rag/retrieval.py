@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Iterable, List, Optional
 
 from .indexing import Chunk, embed_texts, tokenize
 
@@ -129,6 +129,52 @@ def retrieve(
     return results
 
 
+def merge_results(results_list: Iterable[List[RetrievalResult]], top_k: int) -> List[RetrievalResult]:
+    merged = {}
+    for results in results_list:
+        for item in results:
+            key = (item.chunk.page, item.chunk.cid)
+            if key not in merged or item.score > merged[key].score:
+                merged[key] = item
+    ranked = sorted(merged.values(), key=lambda r: r.score, reverse=True)
+    return ranked[:top_k]
+
+
+def expand_queries(question: str) -> List[str]:
+    base = question.strip()
+    if not base:
+        return []
+    q = base.lower()
+    queries = [base]
+    if "segment" in q:
+        queries.append("business portfolio segments")
+        queries.append(q.replace("segments", "business portfolio").replace("segment", "business portfolio"))
+    if "driver" in q or "drivers" in q or "reason" in q or "cause" in q:
+        queries.append(q.replace("drivers", "reasons").replace("driver", "reason"))
+        queries.append(q.replace("drivers", "impacts").replace("driver", "impact"))
+        queries.append(f"impact due to {q}")
+        queries.append(f"{q} impact")
+    if "change" in q or "changes" in q:
+        queries.append(q.replace("changes", "yoy change").replace("change", "yoy change"))
+        queries.append(q.replace("changes", "impact").replace("change", "impact"))
+    if "passenger" in q or "cargo" in q:
+        queries.append("passenger cargo H1-26 H1-25 change")
+    if "ebitda" in q and "h1" in q and ("driver" in q or "change" in q):
+        queries.append("EBITDA impact due to volume price tariff H1-26")
+
+    deduped = []
+    seen = set()
+    for item in queries:
+        cleaned = item.strip()
+        if not cleaned:
+            continue
+        key = cleaned.lower()
+        if key not in seen:
+            seen.add(key)
+            deduped.append(cleaned)
+    return deduped
+
+
 def snippet(text: str, limit: int = 240) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     if len(text) <= limit:
@@ -152,7 +198,40 @@ def has_query_overlap(question: str, text: str) -> bool:
     if not query_tokens:
         return True
     text_tokens = set(tokenize(text))
+    query_tokens = expand_query_tokens(query_tokens)
     return any(t in text_tokens for t in query_tokens)
+
+
+def overlap_score(question: str, text: str) -> int:
+    query_tokens = [t for t in tokenize(question) if t not in STOPWORDS and len(t) > 2]
+    if not query_tokens:
+        return 0
+    text_tokens = set(tokenize(text))
+    query_tokens = expand_query_tokens(query_tokens)
+    return sum(1 for t in query_tokens if t in text_tokens)
+
+
+def expand_query_tokens(tokens: List[str]) -> List[str]:
+    expanded = set(tokens)
+    if "passenger" in expanded or "passengers" in expanded:
+        expanded.add("pax")
+    if "cargo" in expanded:
+        expanded.add("cargo")
+    if "airport" in expanded or "airports" in expanded:
+        expanded.add("aahl")
+    if "air" in expanded and "traffic" in expanded:
+        expanded.add("atm")
+    return list(expanded)
+
+
+def select_context(question: str, retrieved: List[RetrievalResult], max_chunks: int = 4) -> List[RetrievalResult]:
+    if len(retrieved) <= max_chunks:
+        return retrieved
+    scored = []
+    for item in retrieved:
+        scored.append((item.score, overlap_score(question, item.chunk.text), item))
+    scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    return [item for _, _, item in scored[:max_chunks]]
 
 
 def should_refuse(question: str, retrieved: List[RetrievalResult]) -> bool:

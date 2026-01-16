@@ -16,7 +16,10 @@ from rag.retrieval import (
     BM25Okapi,
     RetrievalResult,
     build_bm25,
+    expand_queries,
+    merge_results,
     retrieve,
+    select_context,
     should_refuse,
     snippet,
 )
@@ -207,20 +210,27 @@ async def ask_question(payload: dict) -> JSONResponse:
     client = app.state.client
 
     standalone = rewrite_query(client, session.rewrite_model, session.history, question)
-    retrieved = retrieve(
-        standalone,
-        session.chunks,
-        session.bm25,
-        session.embeddings,
-        session.embed_model,
-        client,
-        top_k=8,
-    )
+    queries = expand_queries(standalone)
+    results = [
+        retrieve(
+            q,
+            session.chunks,
+            session.bm25,
+            session.embeddings,
+            session.embed_model,
+            client,
+            top_k=10,
+        )
+        for q in queries
+    ]
+    retrieved = merge_results(results, top_k=10)
 
     if should_refuse(standalone, retrieved):
         answer = "Not found in the document."
     else:
-        answer = answer_with_retry(client, session.qa_model, standalone, retrieved)
+        context_query = " ".join(queries)
+        context_results = select_context(context_query, retrieved, max_chunks=4)
+        answer = answer_with_retry(client, session.qa_model, standalone, context_results)
 
     session.history.append({"user": question, "assistant": answer})
 

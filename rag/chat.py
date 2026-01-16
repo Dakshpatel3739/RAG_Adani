@@ -2,7 +2,15 @@ from typing import List, Optional
 
 from .indexing import Chunk
 from .llm import answer_with_retry, rewrite_query
-from .retrieval import RetrievalResult, print_retrieval, retrieve, should_refuse
+from .retrieval import (
+    RetrievalResult,
+    expand_queries,
+    merge_results,
+    print_retrieval,
+    retrieve,
+    select_context,
+    should_refuse,
+)
 
 
 def chat_loop(
@@ -25,16 +33,21 @@ def chat_loop(
             break
 
         standalone = rewrite_query(client, rewrite_model, history, question)
-        retrieved = retrieve(
-            standalone, chunks, bm25, embeddings, embed_model, client, top_k
-        )
+        queries = expand_queries(standalone)
+        results = [
+            retrieve(q, chunks, bm25, embeddings, embed_model, client, top_k)
+            for q in queries
+        ]
+        retrieved = merge_results(results, top_k)
 
         print_retrieval(retrieved)
 
         if should_refuse(standalone, retrieved):
             answer = "Not found in the document."
         else:
-            answer = answer_with_retry(client, qa_model, standalone, retrieved)
+            context_query = " ".join(queries)
+            context_results = select_context(context_query, retrieved, max_chunks=4)
+            answer = answer_with_retry(client, qa_model, standalone, context_results)
 
         print("\nAnswer:")
         print(answer)
