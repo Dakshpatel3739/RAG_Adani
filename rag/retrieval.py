@@ -152,18 +152,15 @@ def has_query_overlap(question: str, text: str) -> bool:
     if not query_tokens:
         return True
     text_tokens = set(tokenize(text))
-    matches = [t for t in query_tokens if t in text_tokens]
-    if len(query_tokens) >= 3:
-        return len(matches) >= 2
-    return len(matches) >= 1
+    return any(t in text_tokens for t in query_tokens)
 
 
 def should_refuse(question: str, retrieved: List[RetrievalResult]) -> bool:
     if not retrieved:
         return True
-    top = retrieved[0]
-    if top.score < 0.15:
+    best_score = max(item.score for item in retrieved)
+    if best_score < 0.12:
         return True
-    if not has_query_overlap(question, top.chunk.text):
+    if not any(has_query_overlap(question, item.chunk.text) for item in retrieved[:3]):
         return True
     return False

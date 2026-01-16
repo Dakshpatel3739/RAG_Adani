@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from .indexing import Chunk
-from .llm import generate_answer, rewrite_query, validate_answer
+from .llm import answer_with_retry, rewrite_query
 from .retrieval import RetrievalResult, print_retrieval, retrieve, should_refuse
 
 
@@ -34,8 +34,7 @@ def chat_loop(
         if should_refuse(standalone, retrieved):
             answer = "Not found in the document."
         else:
-            answer = generate_answer(client, qa_model, standalone, retrieved)
-            answer = validate_answer(answer, retrieved)
+            answer = answer_with_retry(client, qa_model, standalone, retrieved)
 
         print("\nAnswer:")
         print(answer)

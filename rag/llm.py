@@ -49,6 +49,7 @@ def generate_answer(
     model: str,
     question: str,
     retrieved: List[RetrievalResult],
+    strict: bool = False,
 ) -> str:
     if not retrieved:
         return "Not found in the document."
@@ -65,11 +66,15 @@ def generate_answer(
         "Not found in the document.\n\n"
         "Rules:\n"
         "- Do not use outside knowledge.\n"
-        "- Keep the answer short.\n"
+        "- Answer in 1-2 short sentences.\n"
         "- Include citations in square brackets with page and chunk ids for every sentence, "
         "like [p13:c42].\n"
         "- If you output 'Not found in the document.', output nothing else."
     )
+    if strict:
+        system_prompt += (
+            "\n- Citations are mandatory; use only the provided context citations."
+        )
 
     user_prompt = f"Question: {question}\n\nContext:\n{context}"
 
@@ -130,3 +135,18 @@ def validate_answer(answer: str, retrieved: List[RetrievalResult]) -> str:
         return "Not found in the document."
 
     return answer
+
+
+def answer_with_retry(
+    client: "OpenAI",
+    model: str,
+    question: str,
+    retrieved: List[RetrievalResult],
+    retries: int = 1,
+) -> str:
+    answer = generate_answer(client, model, question, retrieved, strict=False)
+    validated = validate_answer(answer, retrieved)
+    if validated != "Not found in the document." or retries <= 0:
+        return validated
+    answer = generate_answer(client, model, question, retrieved, strict=True)
+    return validate_answer(answer, retrieved)

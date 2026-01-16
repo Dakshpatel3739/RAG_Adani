@@ -49,7 +49,7 @@ def main() -> None:
         "--cache-dir", default="data/cache", help="Directory for downloaded PDFs"
     )
     parser.add_argument("--reindex", action="store_true", help="Force rebuild index")
-    parser.add_argument("--k", type=int, default=5, help="Top-k chunks to retrieve")
+    parser.add_argument("--k", type=int, default=8, help="Top-k chunks to retrieve")
     parser.add_argument(
         "--max-chars", type=int, default=1200, help="Max chars per chunk"
     )

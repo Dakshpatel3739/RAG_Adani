@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 from rag.env import load_env
 from rag.indexing import Chunk, build_index, load_index, save_index
-from rag.llm import OpenAI, generate_answer, get_openai_client, rewrite_query, validate_answer
+from rag.llm import OpenAI, answer_with_retry, get_openai_client, rewrite_query
 from rag.retrieval import (
     BM25Okapi,
     RetrievalResult,
@@ -214,14 +214,13 @@ async def ask_question(payload: dict) -> JSONResponse:
         session.embeddings,
         session.embed_model,
         client,
-        top_k=5,
+        top_k=8,
     )
 
     if should_refuse(standalone, retrieved):
         answer = "Not found in the document."
     else:
-        answer = generate_answer(client, session.qa_model, standalone, retrieved)
-        answer = validate_answer(answer, retrieved)
+        answer = answer_with_retry(client, session.qa_model, standalone, retrieved)
 
     session.history.append({"user": question, "assistant": answer})
 

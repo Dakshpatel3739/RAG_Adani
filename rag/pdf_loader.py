@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import List, Tuple
 from urllib.parse import urlparse
-from urllib.request import urlretrieve
+from urllib.request import Request, urlopen, urlretrieve
 
 
 def download_pdf(url: str, cache_dir: Path) -> Path:
@@ -11,7 +11,21 @@ def download_pdf(url: str, cache_dir: Path) -> Path:
     parsed = urlparse(url)
     filename = Path(parsed.path).name or "document.pdf"
     target = cache_dir / filename
-    urlretrieve(url, target)  # nosec - controlled input from user
+    try:
+        urlretrieve(url, target)  # nosec - controlled input from user
+        if target.exists() and target.stat().st_size > 0:
+            return target
+    except Exception:
+        pass
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+        "Referer": f"{parsed.scheme}://{parsed.netloc}/",
+        "Accept": "application/pdf,application/octet-stream,*/*",
+    }
+    req = Request(url, headers=headers)
+    with urlopen(req, timeout=60) as resp:  # nosec - controlled input from user
+        target.write_bytes(resp.read())
     return target
 
 
@@ -34,6 +48,21 @@ def extract_pdf_pages(pdf_path: Path) -> List[Tuple[int, str]]:
         with pdfplumber.open(str(pdf_path)) as pdf:
             for idx, page in enumerate(pdf.pages):
                 text = page.extract_text() or ""
+                try:
+                    tables = page.extract_tables() or []
+                    table_lines = []
+                    for table in tables:
+                        for row in table:
+                            if not row:
+                                continue
+                            cells = [(cell or "").strip() for cell in row]
+                            row_text = " | ".join([cell for cell in cells if cell])
+                            if row_text:
+                                table_lines.append(row_text)
+                    if table_lines:
+                        text = f"{text}\n" + "\n".join(table_lines)
+                except Exception:
+                    pass
                 pages.append((idx + 1, text))
         return pages
     except Exception as exc:
