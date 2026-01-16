@@ -1,12 +1,12 @@
 # PDF RAG Chat
 
-A minimal RAG chat app that answers questions grounded in a PDF and cites page/chunk sources.
+A minimal RAG app that answers questions grounded in a PDF and cites page/chunk sources.
 
-## Setup
+## Quick Start (Upload Any PDF)
 
-1) Install deps
+1) Install dependencies
 ```
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 ```
 
 2) Add your OpenAI key in `.env`
@@ -14,14 +14,23 @@ pip install -r requirements.txt
 OPENAI_API_KEY=your_api_key_here
 ```
 
-## Run
+3) Start the web UI
+```
+python3 server.py
+```
+
+4) Open `http://localhost:8000`, upload a PDF, and start chatting.
+
+The UI builds an index from your uploaded file and shows retrieval evidence with each answer.
+
+## CLI Mode (Optional)
 
 Local PDF (auto-opens a GUI file picker if available):
 ```
 python3 main.py
 ```
 
-Or pass a path directly:
+Pass a path directly:
 ```
 python3 main.py --pdf ./doc.pdf
 ```
@@ -36,17 +45,13 @@ Optional flags:
 - `--reindex` to rebuild the index
 - `--no-picker` to skip the GUI picker and use the terminal prompt
 
-## Web UI (Port 8000)
-
-Start the upload + chat UI:
-```
-python3 server.py
-```
-
-Then open `http://localhost:8000` and upload any PDF. The UI will build the index and open a chat panel with retrieval evidence.
-
-## Output
+## Output Format
 
 Each question prints:
 - Top-k retrieved chunks with scores and citations
 - A grounded answer with citations, or `Not found in the document.`
+
+## Notes
+
+- Uploaded PDFs are stored under `data/uploads`.
+- Indexes are cached under `data/index` for faster re-runs.
