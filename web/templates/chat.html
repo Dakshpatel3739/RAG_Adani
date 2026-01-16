@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF RAG Chat</title>
+    <link rel="stylesheet" href="/static/app.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Fraunces:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="bg-ornament"></div>
+    <main class="shell">
+      <section class="card chat-hero">
+        <div>
+          <p class="eyebrow">Live PDF Session</p>
+          <h1>Ask questions about <span>{{ pdf_name }}</span>.</h1>
+          <p class="subhead">
+            Answers are grounded in your document and include citations.
+          </p>
+        </div>
+        <a class="ghost" href="/">Upload another PDF</a>
+      </section>
+
+      <section class="card chat-panel">
+        <div class="chat-log" id="chat-log">
+          <div class="message system">
+            <p>Ready when you are. Ask a question to get started.</p>
+          </div>
+        </div>
+        <form id="ask-form" class="ask-form">
+          <input
+            type="text"
+            id="question"
+            placeholder="Ask about KPIs, segments, or performance highlights"
+            autocomplete="off"
+          />
+          <button class="primary" type="submit">Ask</button>
+        </form>
+      </section>
+
+      <section class="card retrieval-panel">
+        <h2>Retrieved Evidence</h2>
+        <div id="retrieval-log" class="retrieval-log">
+          <p class="helper">Evidence will appear here after each question.</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      window.__RAG_SESSION__ = {
+        sessionId: "{{ session_id }}",
+      };
+    </script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

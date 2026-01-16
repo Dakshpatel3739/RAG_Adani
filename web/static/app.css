@@ -1,0 +1,277 @@
+:root {
+  --bg: #f5f1ea;
+  --bg-accent: #f0c29a;
+  --ink: #1b1a17;
+  --muted: #6b6256;
+  --card: #ffffff;
+  --accent: #ef6b2b;
+  --accent-dark: #c34d12;
+  --shadow: rgba(27, 26, 23, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at top left, #fff8f1 0%, var(--bg) 45%)
+      fixed,
+    linear-gradient(120deg, rgba(239, 107, 43, 0.12), transparent 60%) fixed;
+  min-height: 100vh;
+}
+
+.bg-ornament {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 80% 10%, rgba(239, 107, 43, 0.2), transparent 45%),
+    radial-gradient(circle at 10% 70%, rgba(15, 90, 88, 0.12), transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.shell {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 48px 20px 64px;
+  display: grid;
+  gap: 24px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 18px 40px var(--shadow);
+  animation: rise 0.6s ease both;
+}
+
+.card h1,
+.card h2 {
+  font-family: "Fraunces", "Times New Roman", serif;
+  margin: 0 0 12px;
+}
+
+.card h1 span {
+  color: var(--accent-dark);
+}
+
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.subhead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.hero-art {
+  position: relative;
+  height: 160px;
+}
+
+.ring {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 3px solid rgba(239, 107, 43, 0.4);
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  animation: spin 14s linear infinite;
+}
+
+.ring-alt {
+  width: 90px;
+  height: 90px;
+  border-color: rgba(15, 90, 88, 0.4);
+  top: 50px;
+  right: 80px;
+  animation-duration: 9s;
+}
+
+.form-card {
+  display: grid;
+  gap: 16px;
+}
+
+.helper {
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.upload-form,
+.ask-form {
+  display: grid;
+  gap: 12px;
+}
+
+.file-field {
+  border: 2px dashed rgba(27, 26, 23, 0.2);
+  padding: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+}
+
+.file-field input {
+  display: none;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.primary,
+.ghost {
+  border: none;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.primary {
+  background: linear-gradient(120deg, var(--accent), #f59f63);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(239, 107, 43, 0.3);
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid rgba(27, 26, 23, 0.2);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.chat-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.chat-panel,
+.retrieval-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.chat-log {
+  display: grid;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.message {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f7f2ea;
+  border: 1px solid rgba(27, 26, 23, 0.08);
+}
+
+.message.user {
+  background: rgba(239, 107, 43, 0.12);
+  border-color: rgba(239, 107, 43, 0.2);
+}
+
+.message.assistant {
+  background: rgba(15, 90, 88, 0.08);
+  border-color: rgba(15, 90, 88, 0.2);
+}
+
+.retrieval-log {
+  display: grid;
+  gap: 12px;
+}
+
+.retrieval-item {
+  border: 1px solid rgba(27, 26, 23, 0.08);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fffdf9;
+}
+
+.retrieval-item h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.retrieval-item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.error {
+  padding: 10px 12px;
+  background: #ffe8e0;
+  border-radius: 10px;
+  color: #9f2f00;
+  font-size: 14px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .shell {
+    padding: 28px 16px 40px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF RAG Upload</title>
+    <link rel="stylesheet" href="/static/app.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Fraunces:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="bg-ornament"></div>
+    <main class="shell">
+      <section class="card hero">
+        <div>
+          <p class="eyebrow">PDF RAG Console</p>
+          <h1>Upload a PDF, ask anything, get grounded answers.</h1>
+          <p class="subhead">
+            This app builds an index from your PDF and answers only from that
+            document with citations.
+          </p>
+        </div>
+        <div class="hero-art">
+          <div class="ring"></div>
+          <div class="ring ring-alt"></div>
+        </div>
+      </section>
+
+      <section class="card form-card">
+        <h2>Select your PDF</h2>
+        <p class="helper">Choose any PDF from your computer to start.</p>
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        <form class="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+          <label class="file-field">
+            <input type="file" name="file" accept="application/pdf" required />
+            <span>Choose PDF</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" name="bm25_only" />
+            <span>Fast mode (BM25 only)</span>
+          </label>
+          <button class="primary" type="submit">Build Index</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
