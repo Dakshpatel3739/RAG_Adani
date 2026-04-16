@@ -1,57 +1,105 @@
-# PDF RAG Chat
+# Doc_RAG — Hybrid Retrieval with Grounded, Cited Answers
 
-A minimal RAG app that answers questions grounded in a PDF and cites page/chunk sources.
+A document Q&A system that answers questions grounded in an uploaded PDF, with
+**page-level citations** on every claim and explicit **abstention** when the
+retrieved context does not support an answer.
 
-## Quick Start (Upload Any PDF)
+Built to demonstrate the retrieval-engineering pattern that matters in
+production: don't just retrieve — retrieve the *right* passages, fuse multiple
+signals, and make the generator cite or refuse.
 
-1) Install dependencies
+---
+
+## What it does
+
+- **Hybrid retrieval** — BM25 (sparse, lexical) fused with dense embedding
+  similarity for better recall on both keyword-heavy and semantic queries.
+  Use `--bm25-only` to ablate and measure the lift from the dense component.
+- **Grounded generation** — the LLM is prompted to answer only from retrieved
+  chunks and to emit `Not found in the document.` when context is insufficient.
+  Abstention is a design choice, not a fallback.
+- **Page-level citations** — every answer surfaces the top-k retrieved chunks
+  with scores and page numbers, so users can verify claims against the source.
+- **Persistent index** — chunked and embedded once, cached under `data/index/`,
+  reused on subsequent queries. `--reindex` forces a rebuild.
+- **Two interfaces** — a browser UI (FastAPI + vanilla JS) for end users, and
+  a CLI for batch / scripting use.
+
+## Architecture
+
 ```
+PDF upload
+   │
+   ▼
+Chunking (page-aware)
+   │
+   ├──► BM25 index  ─────┐
+   │                     │
+   └──► Embedding index ─┤
+                         │
+                         ▼
+                  Hybrid retrieval
+                  (score fusion, top-k)
+                         │
+                         ▼
+                  Grounded LLM call
+                  (cite-or-refuse prompt)
+                         │
+                         ▼
+                Answer + chunk evidence
+                (page numbers, scores)
+```
+
+## Stack
+
+Python · FastAPI · OpenAI API · `rank_bm25` · sentence-transformers
+(embeddings) · HTML / CSS / JS · CLI via `argparse`.
+
+## Quick start
+
+```bash
 python3 -m pip install -r requirements.txt
-```
-
-2) Add your OpenAI key in `.env`
-```
-OPENAI_API_KEY=your_api_key_here
-```
-
-3) Start the web UI
-```
+echo "OPENAI_API_KEY=sk-..." > .env
 python3 server.py
+# open http://localhost:8000
 ```
 
-4) Open `http://localhost:8000`, upload a PDF, and start chatting.
+Upload any PDF, ask questions. Each answer ships with the retrieval evidence
+it was grounded on.
 
-The UI builds an index from your uploaded file and shows retrieval evidence with each answer.
+## CLI
 
-## CLI Mode (Optional)
-
-Local PDF (auto-opens a GUI file picker if available):
-```
-python3 main.py
-```
-
-Pass a path directly:
-```
-python3 main.py --pdf ./doc.pdf
+```bash
+python3 main.py --pdf ./doc.pdf      # local file
+python3 main.py --pdf https://...    # URL
+python3 main.py --bm25-only          # ablate dense retrieval
+python3 main.py --reindex            # force rebuild
+python3 main.py --no-picker          # skip GUI file dialog
 ```
 
-PDF URL:
-```
-python3 main.py --pdf "https://example.com/doc.pdf"
-```
+## Output contract
 
-Optional flags:
-- `--bm25-only` to skip embeddings
-- `--reindex` to rebuild the index
-- `--no-picker` to skip the GUI picker and use the terminal prompt
+Every query prints:
 
-## Output Format
+1. Top-k retrieved chunks with hybrid scores and page citations
+2. A grounded answer with inline citations, **or** `Not found in the document.`
 
-Each question prints:
-- Top-k retrieved chunks with scores and citations
-- A grounded answer with citations, or `Not found in the document.`
+No answers without evidence. No confident guessing when the document doesn't
+cover the question.
 
-## Notes
+## What's next
 
-- Uploaded PDFs are stored under `data/uploads`.
-- Indexes are cached under `data/index` for faster re-runs.
+- Cross-encoder reranking stage on top of hybrid retrieval (precision lift
+  at the cost of one extra model call).
+- Retrieval evaluation harness — retrieval@k, MRR, groundedness on a held-out
+  QA set.
+- Port to a Kubernetes-native serving pattern using NVIDIA NIM microservices
+  for LLM / embedding / reranking inference with Milvus as the vector store,
+  following the architecture covered in the NVIDIA DLI "Deploying RAG
+  Pipelines for Production at Scale" course.
+
+## Author
+
+Daksh Patel — [github.com/Dakshpatel3739](https://github.com/Dakshpatel3739)
+First-author research at PReMI 2025 (IIT Delhi, Springer LNCS).
+NVIDIA Inception Program member.
